@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# custom files
+*.csv
+secret.*
+*.env
+.DS_Store
+
 # C extensions
 *.so
 
