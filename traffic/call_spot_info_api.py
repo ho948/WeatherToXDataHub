@@ -60,9 +60,12 @@ def fetch_data(total_count):
 def save_to_csv(data):
     with open('./output/spot_info.csv', mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        # CSV 헤더 작성
         writer.writerow(['spot_num', 'spot_nm', 'grs80tm_x', 'grs80tm_y'])
-        # 데이터 저장
+        writer.writerows(data)
+
+    with open('../dags/spot_info.csv', mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['spot_num', 'spot_nm', 'grs80tm_x', 'grs80tm_y'])
         writer.writerows(data)
 
 # 메인 실행 함수
