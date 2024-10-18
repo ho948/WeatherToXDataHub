@@ -53,8 +53,15 @@ def fetch_data(total_count):
     return all_data
 
 def save_to_csv(data):
-    output_path = './output/spot_info.csv'
-    master_file_path = '../dags/output/master_files/spot_info.csv'
+    # output 및 master_files 디렉토리 존재 여부 확인 및 생성
+    output_dir = './output'
+    master_file_dir = '../dags/output/master_files'
+    
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(master_file_dir, exist_ok=True)
+    
+    output_path = os.path.join(output_dir, 'spot_info.csv')
+    master_file_path = os.path.join(master_file_dir, 'spot_info.csv')
     
     with open(output_path, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
