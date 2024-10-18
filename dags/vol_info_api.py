@@ -14,7 +14,7 @@ cur_path = os.path.dirname(os.path.realpath(__file__))
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2024, 10, 16),
+    'start_date': datetime(2024, 1, 2),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
