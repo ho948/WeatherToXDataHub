@@ -1,7 +1,8 @@
+from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 import xml.etree.ElementTree as ET
 import csv
-from dotenv import load_dotenv
 import os
 
 class SeoulAPICaller:
@@ -98,45 +99,69 @@ class SeoulAPICaller:
         else:
             print("데이터를 가져오는 데 실패했습니다.")
 
-    def get_csv_data(self, column_name):
-        data = []
-        csv_path = f'./output/{self.output_filename}.csv'
-
-        with open(csv_path, mode='r', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                data.append(row[column_name])
-        
-        print(f"{'*'*10} {self.output_filename}.csv을 읽었습니다. {'*'*10}")
-        return data
-
     def process_with_additionals(self):
-        all_data = []
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            all_data = []
+            futures = []
+            total_count = 0
 
-        for additional in self.additionals:
-            total_count = self.get_total_count(additional)
+            for additional in self.additionals:
+                count = self.get_total_count(additional)
+                total_count += count
+                futures.append(executor.submit(self.fetch_data, count, additional))
+
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    all_data.extend(result)
+
+            self.save_to_csv(all_data)
             print(f"총 데이터 개수: {total_count}")
-            data = self.fetch_data(total_count, additional)
-            all_data.extend(data)
+            print(f"{self.output_filename} CSV 파일 변환 완료!")
 
-        self.save_to_csv(all_data)
-        print(f"{self.output_filename} CSV 파일 변환 완료!")
+def get_csv_data(file_path, column_name):
+    data = []
 
+    with open(file_path, mode='r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            data.append(row[column_name])
+
+    print(f"{'*'*10} {file_path}을 읽었습니다. {'*'*10}")
+    return data
 
 if __name__ == "__main__":
     # 마스터 데이터 API
     acc_main_api_caller = SeoulAPICaller("AccMainCode", "acc_main_code", ['acc_type', 'acc_type_nm'])
     acc_main_api_caller.process()
+
     acc_sub_client_api_caller = SeoulAPICaller("AccSubCode", "acc_sub_code", ['acc_dtype', 'acc_dtype_nm'])
     acc_sub_client_api_caller.process()
+
     region_info_client_api_caller = SeoulAPICaller("RegionInfo", "region_info", ['reg_cd', 'reg_name'])
     region_info_client_api_caller.process()
-    road_div_client_api_caller = SeoulAPICaller("RoadDivInfo", "road_div_info", ['road_div_cd', 'road_div_nm'])
-    road_div_client_api_caller.process()
+
     spot_info_client_api_caller = SeoulAPICaller("SpotInfo", "spot_info", ['spot_num', 'spot_nm', 'grs80tm_x', 'grs80tm_y'])
     spot_info_client_api_caller.process()
 
+    road_div_client_api_caller = SeoulAPICaller("RoadDivInfo", "road_div_info", ['road_div_cd', 'road_div_nm'])
+    road_div_client_api_caller.process()
+
     # 마스터 to 마스터 데이터 API
-    road_div_cds = road_div_client_api_caller.get_csv_data('road_div_cd')
+    road_div_cds = get_csv_data("./output/road_div_info.csv", 'road_div_cd')
+
     road_info_api_caller = SeoulAPICaller("RoadInfo", "road_info", ['road_div_cd', 'axis_cd', 'axis_name'], road_div_cds)
     road_info_api_caller.process_with_additionals()
+
+    axis_cds = get_csv_data("./output/road_info.csv", 'axis_cd')
+
+    link_with_load_api_caller = SeoulAPICaller("LinkWithLoad", "link_with_load", ['axis_cd', 'axis_dir', 'link_seq', 'link_id'], axis_cds)
+    link_with_load_api_caller.process_with_additionals()
+    
+    link_ids = get_csv_data("./output/link_with_load.csv", 'link_id')
+
+    link_info_api_caller = SeoulAPICaller("LinkInfo", "link_info", ['link_id', 'road_name', 'st_node_nm', 'ed_node_nm', 'map_dist', 'reg_cd'], link_ids)
+    link_info_api_caller.process_with_additionals()
+
+    link_ver_info_api_caller = SeoulAPICaller("LinkVerInfo", "link_ver_info", ['link_id', 'ver_seq', 'grs80tm_x', 'grs80tm_y'], link_ids)
+    link_ver_info_api_caller.process_with_additionals()
