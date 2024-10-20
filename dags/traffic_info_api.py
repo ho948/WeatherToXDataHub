@@ -53,13 +53,13 @@ def fetch(link_id, ts):
     if response.status_code == 200:
         try:
             root = ET.fromstring(response.content)
-            traffic_data = []
+            data = []
             for row in root.findall('row'):
                 link_id = row.find('link_id').text
                 prcs_spd = row.find('prcs_spd').text
                 prcs_trv_time = row.find('prcs_trv_time').text
-                traffic_data.append([link_id, prcs_spd, prcs_trv_time, ts])
-            return traffic_data
+                data.append([link_id, prcs_spd, prcs_trv_time, ts])
+            return data
         
         except ET.ParseError as e:
             logging.error(f"XML Parse Error: {e}")

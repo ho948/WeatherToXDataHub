@@ -53,7 +53,7 @@ def fetch(spot_num, date_str, hour):
     if response.status_code == 200:
         try:
             root = ET.fromstring(response.content)
-            vol_data = []
+            data = []
             for row in root.findall('row'):
                 spot_num = row.find('spot_num').text
                 ymd = row.find('ymd').text
@@ -61,8 +61,8 @@ def fetch(spot_num, date_str, hour):
                 io_type = row.find('io_type').text
                 lane_num = row.find('lane_num').text
                 vol = row.find('vol').text
-                vol_data.append([spot_num, ymd, hh, io_type, lane_num, vol])
-            return vol_data
+                data.append([spot_num, ymd, hh, io_type, lane_num, vol])
+            return data
         
         except ET.ParseError as e:
             logging.error(f"XML Parse Error: {e}")
