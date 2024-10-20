@@ -84,7 +84,6 @@ def save_to_csv(data, dir_path, ts_str):
 def fetch_and_save(**context):
     link_ids = context["task_instance"].xcom_pull(key="return_value", task_ids="get_csv_data")
     execution_ts = datetime.strptime(context['ts_nodash'], '%Y%m%dT%H%M%S') + timedelta(hours=9)
-    
     year = execution_ts.year
     month = execution_ts.month
     day = execution_ts.day

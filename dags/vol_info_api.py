@@ -87,7 +87,6 @@ def save_to_csv(data, dir_path, date_str):
 def fetch_and_save(**context):
     spot_nums = context["task_instance"].xcom_pull(key="return_value", task_ids="get_csv_data")
     execution_date = datetime.strptime(context['ds_nodash'], '%Y%m%d') - timedelta(days=1)
-    
     year = execution_date.year
     month = execution_date.month
     day = execution_date.day
