@@ -2,7 +2,6 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 from airflow.models import Variable
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 import xml.etree.ElementTree as ET
 import csv
@@ -93,7 +92,7 @@ def fetch_and_save(**context):
 
     ts_str = execution_ts.strftime("%Y%m%d_%H%M")
     data = fetch(execution_ts)
-    
+
     save_to_csv(data, dir_path, ts_str)
 
 fetch_and_save_task = PythonOperator(
