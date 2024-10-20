@@ -32,7 +32,7 @@ def fetch(ts):
     start_index = 1
     end_index = 1000
     api_key = Variable.get('SEOUL_API_KEY')
-    api_url = f"http://openapi.seoul.go.kr:8088/{api_key}/xml/{API_NAME}/{start_index}/{end_index}/{link_id}"
+    api_url = f"http://openapi.seoul.go.kr:8088/{api_key}/xml/{API_NAME}/{start_index}/{end_index}/"
     logging.info(f'API 주소: {api_url}')
     response = requests.get(api_url)
     
