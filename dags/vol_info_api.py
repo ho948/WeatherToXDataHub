@@ -10,6 +10,8 @@ import os
 import logging
 
 cur_path = os.path.dirname(os.path.realpath(__file__))
+API_NAME = 'VolInfo'
+DAG_NAME = 'vol_info'
 
 default_args = {
     'owner': 'airflow',
@@ -20,27 +22,31 @@ default_args = {
 }
 
 dag = DAG(
-    'vol_info_dag',
+    f'{DAG_NAME}_dag',
     default_args=default_args,
     description='서울시 교통량 이력 정보 API',
     schedule_interval='@daily',
     catchup=True
 )
 
-def read_spot_nums(**context):
-    spot_nums = []
-    csv_path = os.path.join(cur_path, 'output/master_files/spot_info.csv')
-    with open(csv_path, mode='r', encoding='utf-8') as file:
+def get_csv_data(**context):
+    data = []
+    column_name = 'spot_num'
+    file_name = 'spot_info'
+    file_path = os.path.join(cur_path, f'output/master_files/{file_name}.csv')
+
+    with open(file_path, mode='r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            spot_nums.append(row['spot_num'])
-    return spot_nums
+            data.append(row[column_name])
+
+    return data
 
 def fetch(spot_num, date_str, hour):
     start_index = 1
     end_index = 1000
     api_key = Variable.get('SEOUL_API_KEY')
-    api_url = f"http://openapi.seoul.go.kr:8088/{api_key}/xml/VolInfo/{start_index}/{end_index}/{spot_num}/{date_str}/{hour}/"
+    api_url = f"http://openapi.seoul.go.kr:8088/{api_key}/xml/{API_NAME}/{start_index}/{end_index}/{spot_num}/{date_str}/{hour}/"
     logging.info(f'API 주소: {api_url}')
     response = requests.get(api_url)
     
@@ -68,7 +74,7 @@ def fetch(spot_num, date_str, hour):
         return []
 
 def save_to_csv(data, dir_path, date_str):
-    csv_path = f'{dir_path}/vol_info_{date_str}.csv'
+    csv_path = f'{dir_path}/{DAG_NAME}_{date_str}.csv'
     try:
         with open(csv_path, mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
@@ -79,13 +85,13 @@ def save_to_csv(data, dir_path, date_str):
         logging.error(f"Error: {e}")
 
 def fetch_and_save(**context):
-    spot_nums = context["task_instance"].xcom_pull(key="return_value", task_ids="read_spot_nums")
+    spot_nums = context["task_instance"].xcom_pull(key="return_value", task_ids="get_csv_data")
     execution_date = datetime.strptime(context['ds_nodash'], '%Y%m%d') - timedelta(days=1)
     
     year = execution_date.year
     month = execution_date.month
     day = execution_date.day
-    dir_path = os.path.join(cur_path, f'output/transaction_files/vol_info/{year}/{month}/{day}')
+    dir_path = os.path.join(cur_path, f'output/transaction_files/{DAG_NAME}/{year}/{month}/{day}')
     
     try:
         os.makedirs(dir_path)
@@ -110,9 +116,9 @@ def fetch_and_save(**context):
 
         save_to_csv(all_data, dir_path, date_str)
 
-read_spot_nums_task = PythonOperator(
-    task_id='read_spot_nums',
-    python_callable=read_spot_nums,
+get_csv_data_task = PythonOperator(
+    task_id='get_csv_data',
+    python_callable=get_csv_data,
     dag=dag
 )
 
@@ -122,4 +128,4 @@ fetch_and_save_task = PythonOperator(
     dag=dag
 )
 
-read_spot_nums_task >> fetch_and_save_task
+get_csv_data_task >> fetch_and_save_task
