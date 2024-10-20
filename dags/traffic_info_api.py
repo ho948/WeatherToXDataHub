@@ -75,7 +75,7 @@ def save_to_csv(data, dir_path, ts_str):
     try:
         with open(csv_path, mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
-            writer.writerow(['spot_num', 'ymd', 'hh', 'io_type', 'lane_num', 'vol', 'ts'])
+            writer.writerow(['link_id', 'prcs_spd', 'prcs_trv_time', 'ts'])
             writer.writerows(data)
             logging.info(f'{csv_path}가 저장되었습니다.')
     except Exception as e:
