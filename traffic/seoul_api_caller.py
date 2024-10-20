@@ -4,6 +4,7 @@ import requests
 import xml.etree.ElementTree as ET
 import csv
 import os
+import time
 
 class SeoulAPICaller:
     def __init__(self, service_name, output_filename, columns, additionals=None):
@@ -89,6 +90,7 @@ class SeoulAPICaller:
             writer.writerows(data)
 
     def process(self):
+        start_time = time.time()
         total_count = self.get_total_count()
 
         if total_count:
@@ -98,8 +100,17 @@ class SeoulAPICaller:
             print(f"{self.output_filename} CSV 파일 변환 완료!")
         else:
             print("데이터를 가져오는 데 실패했습니다.")
+        
+        end_time = time.time()
+        execution_time = end_time - start_time
+        minutes = int(execution_time // 60)
+        seconds = execution_time % 60
+
+        print(f"총 소요 시간: {minutes}분 {seconds:.2f}초")
 
     def process_with_additionals(self):
+        start_time = time.time()
+        
         with ThreadPoolExecutor(max_workers=20) as executor:
             all_data = []
             futures = []
@@ -118,6 +129,13 @@ class SeoulAPICaller:
             self.save_to_csv(all_data)
             print(f"총 데이터 개수: {total_count}")
             print(f"{self.output_filename} CSV 파일 변환 완료!")
+
+        end_time = time.time()
+        execution_time = end_time - start_time
+        minutes = int(execution_time // 60)
+        seconds = execution_time % 60
+
+        print(f"총 소요 시간: {minutes}분 {seconds:.2f}초")
 
 def get_csv_data(file_path, column_name):
     data = []
